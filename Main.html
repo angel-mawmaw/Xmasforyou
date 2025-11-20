@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Christmas Wishlist Exchange</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(#c92136, #7e0017);
+    color: white;
+    text-align: center;
+    min-height: 100vh;
+    padding-bottom: 40px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.made-by {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 0.9rem;
+    color: #ffe680;
+    font-weight: bold;
+}
+
+header {
+    padding: 20px;
+}
+header h1 {
+    font-size: 2.5rem;
+    text-shadow: 0 0 10px gold;
+}
+header p {
+    font-size: 1.2rem;
+}
+#playMusicBtn {
+    background: gold;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#playMusicBtn:hover {
+    background: #ffe680;
+    transform: scale(1.05);
+}
+
+section {
+    background: rgba(255,255,255,0.1);
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+.hidden { display: none; }
+
+input, textarea {
+    width: 90%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 1rem;
+}
+textarea {
+    height: 100px;
+    resize: none;
+    line-height: 1.5rem;
+    max-height: 6rem;
+    overflow-y: auto;
+}
+
+button {
+    background: gold;
+    color: black;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: bold;
+}
+button:hover {
+    transform: scale(1.05);
+    background: #ffe680;
+}
+
+#pickedName {
+    font-size: 2rem;
+    margin-top: 15px;
+    text-shadow: 0 0 10px gold, 0 0 20px white;
+}
+#pickedProfile {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-top: 15px;
+    border: 3px solid gold;
+}
+
+.error {
+    color: #ffbbbb;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.snowflake {
+    position: fixed;
+    top: -10px;
+    background: white;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+}
+@keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="made-by">Made by Angelica</div>
+
+<header>
+<h1>🎄 Christmas Wishlist Exchange 🎁</h1>
+<p>Welcome to our Christmas Party Gift Picker!</p>
+<button id="playMusicBtn">🎵 Play "Christmas in Our Hearts"</button>
+</header>
+
+<audio id="christmasSong" loop>
+    <source src="music/Christmas_in_our_hearts.mp3(128k).mp3" type="audio/mpeg">
+</audio>
+
+<section id="login-section">
+<h2>Login</h2>
+<p>Type your name to continue</p>
+<input type="text" id="usernameInput" placeholder="Type your name...">
+<button onclick="loginUser()">Login</button>
+<p id="loginError" class="error"></p>
+</section>
+
+<section id="wishlist-section" class="hidden">
+<h2>Your Christmas Wishlist 🎁</h2>
+<p>Write your wishlist below (max 4 lines) and submit.</p>
+<textarea id="wishlistInput" placeholder="Write your wishlist here..." maxlength="200"></textarea>
+<button onclick="submitWishlist()">Submit Wishlist</button>
+</section>
+
+<section id="result-section" class="hidden">
+<h2>🎁 You Picked Someone! 🎄</h2>
+<p id="pickedName"></p>
+<img id="pickedProfile" src="" alt="Picked User Profile">
+<p id="pickedWishlist" style="white-space: pre-wrap; margin-top: 15px;"></p>
+</section>
+
+<script>
+const USERS=[
+"Angelica","Dwight","Alyssa","Jehann","Jared",
+"Ciara","Echizen","Patrica","Mark Matthew",
+"Christian","Chester","Rica","VJ","Trisha","Santino","Gereill",
+"Jengjeng","Jungjung"
+];
+
+const USER_PROFILES={
+"Angelica":"images/Angelica.jpg",
+"Dwight":"images/Dwight.jpeg",
+"Alyssa":"images/Alyssa.jpeg",
+"Jehann":"images/Jehann.jpeg",
+"Jared":"images/Jared.jpg",
+"Ciara":"images/Ciara.jpeg",
+"Echizen":"images/Echizen.jpeg",
+"Patrica":"images/Patrica.jpeg",
+"Mark Matthew":"images/Mark Matthew.jpeg",
+"Christian":"images/Christian.jpg",
+"Chester":"images/Chester.jpeg",
+"Rica":"images/Rica.jpeg",
+"VJ":"images/VJ.jpeg",
+"Trisha":"images/Trisha.jpeg",
+"Santino":"images/Santino.jpeg",
+"Gereill":"images/Gereill.jpeg",
+"Jengjeng":"images/Jengjeng.jpeg",
+"Jungjung":"images/Jungjung.jpeg"
+};
+
+let currentUser = "";
+let picks = JSON.parse(localStorage.getItem("picks") || "{}");
+let wishlists = JSON.parse(localStorage.getItem("wishlists") || "{}");
+
+const music = document.getElementById("christmasSong");
+const playBtn = document.getElementById("playMusicBtn");
+playBtn.addEventListener("click", () => {
+    if(music.paused){
+        music.play();
+        playBtn.textContent = "⏸️ Pause 'Christmas in Our Hearts'";
+    } else {
+        music.pause();
+        playBtn.textContent = "🎵 Play 'Christmas in Our Hearts'";
+    }
+});
+
+function loginUser(){
+    const username = document.getElementById("usernameInput").value.trim();
+    const error = document.getElementById("loginError");
+
+    if(!USERS.includes(username)){
+        error.textContent = "Name not found. Type exact name.";
+        return;
+    }
+
+    currentUser = username;
+    error.textContent = "";
+
+    if(picks[username] && wishlists[picks[username]]){
+        // Already picked and their wishlist exists
+        showResult(picks[username]);
+        return;
+    }
+
+    document.getElementById("login-section").classList.add("hidden");
+    document.getElementById("wishlist-section").classList.remove("hidden");
+}
+
+function submitWishlist(){
+    const wishlist = document.getElementById("wishlistInput").value.trim();
+    if(wishlist === ""){
+        alert("Please write your wishlist");
+        return;
+    }
+
+    // Save current user's wishlist
+    wishlists[currentUser] = wishlist;
+    localStorage.setItem("wishlists", JSON.stringify(wishlists));
+
+    // Secret Santa pairing
+    let picked = "";
+    if(currentUser === "Jengjeng") picked = "Jungjung";
+    else if(currentUser === "Jungjung") picked = "Jengjeng";
+    else {
+        const available = USERS.filter(u => u !== currentUser && !Object.values(picks).includes(u));
+        picked = available[Math.floor(Math.random() * available.length)];
+    }
+
+    picks[currentUser] = picked;
+    localStorage.setItem("picks", JSON.stringify(picks));
+
+    showResult(picked);
+}
+
+function showResult(name){
+    document.getElementById("login-section").classList.add("hidden");
+    document.getElementById("wishlist-section").classList.add("hidden");
+    document.getElementById("result-section").classList.remove("hidden");
+
+    document.getElementById("pickedName").textContent = name;
+    document.getElementById("pickedProfile").src = USER_PROFILES[name] || "";
+
+    const wishlistText = wishlists[name] || "Wishlist not submitted yet!";
+    document.getElementById("pickedWishlist").textContent = "🎁 Wishlist:\n" + wishlistText;
+}
+
+// Falling snow
+for(let i=0; i<50; i++){
+    const snow = document.createElement("div");
+    snow.className = "snowflake";
+    snow.style.left = Math.random() * 100 + "vw";
+    snow.style.animationDuration = 5 + Math.random() * 5 + "s";
+    snow.style.width = snow.style.height = (5 + Math.random() * 5) + "px";
+    document.body.appendChild(snow);
+}
+</script>
+
+</body>
+</html>
